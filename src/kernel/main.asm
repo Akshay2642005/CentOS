@@ -15,12 +15,12 @@ puts:
     push bx
 
 .loop:
-    lodsb               
-    or al, al           
+    lodsb
+    or al, al
     jz .done
 
-    mov ah, 0x0E        
-    mov bh, 0           
+    mov ah, 0x0E
+    mov bh, 0
     int 0x10
 
     jmp .loop
@@ -28,18 +28,18 @@ puts:
 .done:
     pop bx
     pop ax
-    pop si    
+    pop si
     ret
 
 main:
     ; setup data segments
-    mov ax, 0           
+    mov ax, 0 
     mov ds, ax
     mov es, ax
-    
+ 
     ; setup stack
     mov ss, ax
-    mov sp, 0x7E00      
+    mov sp, 0x7E00
 
     ; print hello world message
     mov si, msg_hello
