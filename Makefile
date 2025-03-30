@@ -1,42 +1,67 @@
-# Define the build script
-BUILD_SCRIPT = sh scripts/build.sh
-RUN_SCRIPT = sh scripts/run.sh
+ASM=nasm
+CC=gcc
 
-# Default target (runs if no target is specified)
-all:
-	@echo "Building img..."
-	@$(BUILD_SCRIPT) all
-	@echo "Done!..."
-# Build only the bootloader
-bootloader:
-	@$(BUILD_SCRIPT) bootloader
+SRC_DIR=src
+TOOLS_DIR=tools
+BUILD_DIR=build
 
-# Build only the kernel
-kernel:
-	@$(BUILD_SCRIPT) kernel
+.PHONY: all floppy_image kernel bootloader clean always tools_fat run r
 
-# Build only the floppy image
-floppy:
-	@$(BUILD_SCRIPT) floppy
+all: floppy_image tools_fat
 
-# Run the floppy image in QEMU
+#
+# Floppy image
+#
+floppy_image: $(BUILD_DIR)/main_floppy.img
+
+$(BUILD_DIR)/main_floppy.img: bootloader kernel
+	dd if=/dev/zero of=$(BUILD_DIR)/main_floppy.img bs=512 count=2880
+	mkfs.fat -F 12 -n "NBOS" $(BUILD_DIR)/main_floppy.img
+	dd if=$(BUILD_DIR)/bootloader.bin of=$(BUILD_DIR)/main_floppy.img conv=notrunc
+	mcopy -i $(BUILD_DIR)/main_floppy.img $(BUILD_DIR)/kernel.bin "::kernel.bin"
+	mcopy -i $(BUILD_DIR)/main_floppy.img test.txt "::test.txt"
+
+#
+# Bootloader
+#
+bootloader: $(BUILD_DIR)/bootloader.bin
+
+$(BUILD_DIR)/bootloader.bin: always
+	$(ASM) $(SRC_DIR)/bootloader/boot.asm -f bin -o $(BUILD_DIR)/bootloader.bin
+
+#
+# Kernel
+#
+kernel: $(BUILD_DIR)/kernel.bin
+
+$(BUILD_DIR)/kernel.bin: always
+	$(ASM) $(SRC_DIR)/kernel/main.asm -f bin -o $(BUILD_DIR)/kernel.bin
+
+#
+# Tools
+#
+tools_fat: $(BUILD_DIR)/tools/fat
+$(BUILD_DIR)/tools/fat: always $(TOOLS_DIR)/fat/fat.c
+	mkdir -p $(BUILD_DIR)/tools
+	$(CC) -g -o $(BUILD_DIR)/tools/fat $(TOOLS_DIR)/fat/fat.c
+
+#
+# Always
+#
+always:
+	mkdir -p $(BUILD_DIR)
+
+#
+# Run
+#
 run:
 	@echo "Running the OS in QEMU..."
-	@$(RUN_SCRIPT)
-
+	@qemu-system-i386 -drive format=raw,file=$(BUILD_DIR)/main_floppy.img
 r:run
 
-# Clean the build directory
+#
+# Clean
+#
+
 clean:
-	@$(BUILD_SCRIPT) clean
-
-# Show available commands
-help:
-	@echo "Available targets:"
-	@echo "  make all        - Build bootloader, kernel, and floppy"
-	@echo "  make bootloader - Build only the bootloader"
-	@echo "  make kernel     - Build only the kernel"
-	@echo "  make floppy     - Create the floppy disk image"
-	@echo "  make run        - Run the OS in QEMU"
-	@echo "  make clean      - Clean the build directory"
-
+	rm -rf $(BUILD_DIR)/*
