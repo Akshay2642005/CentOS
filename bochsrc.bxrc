@@ -4,5 +4,5 @@ vgaromimage: file="C:\Program Files\Bochs-3.0\VGABIOS-lgpl-latest.bin"
 floppya: 1_44=build/main_floppy.img, status=inserted
 boot: floppy
 mouse: enabled=0
-display_library: win32
+display_library: sdl2
 
