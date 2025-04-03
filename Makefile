@@ -22,14 +22,18 @@ $(BUILD_DIR)/main_floppy.img: bootloader kernel
 	dd if=$(BUILD_DIR)/stage1.bin of=$(BUILD_DIR)/main_floppy.img conv=notrunc
 	mcopy -i $(BUILD_DIR)/main_floppy.img $(BUILD_DIR)/stage2.bin "::stage2.bin"
 	mcopy -i $(BUILD_DIR)/main_floppy.img $(BUILD_DIR)/kernel.bin "::kernel.bin"
+
 	mcopy -i $(BUILD_DIR)/main_floppy.img test.txt "::test.txt"
 
+
 #
+
 # Bootloader
 #
 bootloader: stage1 stage2
 
 stage1: $(BUILD_DIR)/stage1.bin
+
 
 $(BUILD_DIR)/stage1.bin: always
 	$(MAKE) -C $(SRC_DIR)/bootloader/stage1 BUILD_DIR=$(abspath $(BUILD_DIR))
@@ -47,7 +51,9 @@ kernel: $(BUILD_DIR)/kernel.bin
 $(BUILD_DIR)/kernel.bin: always
 	$(MAKE) -C $(SRC_DIR)/kernel BUILD_DIR=$(abspath $(BUILD_DIR))
 
+
 #
+
 # Tools
 #
 tools_fat: $(BUILD_DIR)/tools/fat
@@ -67,6 +73,7 @@ always:
 clean:
 	$(MAKE) -C $(SRC_DIR)/bootloader/stage1 BUILD_DIR=$(abspath $(BUILD_DIR)) clean
 	$(MAKE) -C $(SRC_DIR)/bootloader/stage2 BUILD_DIR=$(abspath $(BUILD_DIR)) clean
+
 	$(MAKE) -C $(SRC_DIR)/kernel BUILD_DIR=$(abspath $(BUILD_DIR)) clean
 	rm -rf $(BUILD_DIR)/*
 
